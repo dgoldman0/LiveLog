@@ -1,0 +1,13 @@
+<!--A list of articles from a single user-->
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Neatly display title and tldr for each article in a list with links to each-->
+<ul>
+  {% for article in articles %}
+    <li>
+      <h3><a href="{{ url_for('view_article', article_id=article.id) }}">{{ article.title }}</a></h3>
+      <p>{{ article.tldr }}</p>
+    </li>
+  {% endfor %}
+{% endblock %}

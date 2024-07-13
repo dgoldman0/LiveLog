@@ -3,7 +3,7 @@ import sqlite3
 import os
 import hashlib
 import binascii
-import llm.tags
+import llm.articles
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -162,7 +162,7 @@ def view_article(article_id):
 @app.route('/user/<int:user_id>/articles', methods=('GET',))
 def articles(user_id):
     conn = get_db_connection()
-    articles = conn.execute('SELECT * FROM articles WHERE user_id = ? AND DRAFT = FALSE', (user_id,)).fetchall()
+    articles = conn.execute('SELECT id, title, subtitle, tldr FROM articles WHERE author_id = ? AND DRAFT = FALSE', (user_id,)).fetchall()
     conn.close()
     return render_template('articles.html', articles=articles)
 
@@ -207,10 +207,11 @@ def post_article(article_id):
     subtitle = article['saved_subtitle']
     content = article['saved_content']
 
-    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ? WHERE id = ?', (title, subtitle, content, article_id))
+    tldr = llm.articles.generate_tldr(content)
+    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, article_id))
     # Remove old article tags and add generate new ones.
     conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
-    tags = llm.tags.generate_tags(content)
+    tags = llm.articles.generate_tags(content)
     for tag in tags:
         conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
     conn.commit()

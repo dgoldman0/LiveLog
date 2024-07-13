@@ -21,6 +21,7 @@ CREATE TABLE articles (
     title TEXT NOT NULL DEFAULT '',
     subtitle TEXT NOT NULL DEFAULT '',
     content TEXT NOT NULL DEFAULT '',
+    tldr TEXT NOT NULL DEFAULT '',
     saved_title TEXT NOT NULL DEFAULT '',
     saved_subtitle TEXT NOT NULL DEFAULT '',
     saved_content TEXT NOT NULL DEFAULT '',
