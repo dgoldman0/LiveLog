@@ -21,7 +21,7 @@ speculative fiction, space opera, urban fantasy, post-apocalyptic, time travel, 
 supernatural beings, steampunk, cyberpunk, mythological tales, heroic quests, dark fantasy, alternate history, futuristic societies,
 supernatural horror.
 
-Give a list of comma-separated tags based on the article provided.
+Give a list of comma-separated tags based on the article provided. Must include at least three genre and three topic tags, at least two reading level, and at least 20 tags in total.
 """
 
 def generate_tags(content, existing_tags=None):
