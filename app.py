@@ -6,7 +6,7 @@ import binascii
 import llm.articles
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = 'super secret key 12294ffee'
 
 DATABASE = 'blog.db'
 
@@ -128,6 +128,22 @@ def delete_blog(blog_id):
     conn.close()
     return redirect(url_for('index'))
 
+# List all tags and their count
+@app.route('/tags', methods=('GET',))
+def tags():
+    conn = get_db_connection()
+    tags = conn.execute('SELECT tag, COUNT(article_id) as article_count FROM article_tags GROUP BY tag').fetchall()
+    conn.close()
+    return render_template('tags.html', tags=tags)
+
+# Get articles for a given tag and use the articles template to display them.
+@app.route('/tag/<tag>', methods=('GET',))
+def tag(tag):
+    conn = get_db_connection()
+    articles = conn.execute('SELECT articles.id, articles.title, articles.subtitle, articles.tldr FROM articles JOIN article_tags ON articles.id = article_tags.article_id WHERE article_tags.tag = ? AND articles.DRAFT = FALSE', (tag,)).fetchall()
+    conn.close()
+    return render_template('articles.html', articles=articles)
+
 @app.route('/article/create', methods=('GET', ))
 def create_article():
     if session.get('user_id') is None:
@@ -202,7 +218,11 @@ def draft_article(article_id):
 def post_article(article_id):
     conn = get_db_connection()
     article = conn.execute('SELECT * FROM articles WHERE id = ?', (article_id,)).fetchone()
-
+    if article is None:
+        return 'Article not found!', 404
+    # Run a new query to see if there are any changes to the article title, subtitle, or content.
+    if article['title'] == article['saved_title'] and article['subtitle'] == article['saved_subtitle'] and article['content'] == article['saved_content']:
+        return 'No changes to post!', 304    
     title = article['saved_title']
     subtitle = article['saved_subtitle']
     content = article['saved_content']
@@ -211,9 +231,21 @@ def post_article(article_id):
     conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, article_id))
     # Remove old article tags and add generate new ones.
     conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
-    tags = llm.articles.generate_tags(content)
+    # Build a dictionary of tags and how many articles they are associated with. We can do that by looking at article_tags.
+    query = """
+        SELECT tag, COUNT(article_id) as article_count
+        FROM article_tags
+        GROUP BY tag"""    
+    conn.execute(query)
+    results = conn.fetchall()
+    all_tags = {row[0]: row[1] for row in results}
+
+    tags = llm.articles.generate_tags(content, all_tags)
     for tag in tags:
+        # Set article's tags
         conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
+        # Add tag to main tag list if none.
+        conn.execute('INSERT OR IGNORE INTO tags (tag) VALUES (?)', (tag.strip(),))
     # Add to revision history
     conn.execute('INSERT INTO article_revisions (article_id, title, subtitle, content, tldr) VALUES (?, ?, ?, ?, ?)', (article_id, title, subtitle, content, tldr))
     conn.commit()

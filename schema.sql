@@ -55,9 +55,16 @@ CREATE TABLE article_coauthors (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
--- A list of tags for an article
-CREATE TABLE article_tags (
-    article_id INTEGER NOT NULL,
+-- A list of all tags
+CREATE TABLE tags (
     tag TEXT NOT NULL,
+    PRIMARY KEY (tag)
+);
+
+-- A list of articles by tag
+CREATE TABLE article_tags (
+    tag TEXT NOT NULL,
+    article_id INTEGER NOT NULL,
+    FOREIGN KEY (tag) REFERENCES tags (tag),
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>Tags</h1>
+  <ul>
+    {% for tag, count in tags.items() %}
+      <li><a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a> ({{ count }})</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
