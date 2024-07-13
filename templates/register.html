@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="register-container">
+        <h2>Register</h2>
+        <form id="registerForm" method="post" onsubmit="return hashPassword();">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <input type="hidden" id="salt" name="salt" value="{{ salt }}">
+            <button type="submit" class="btn">Register</button>
+        </form>
+        <div class="login-link">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+
+    <style>
+        .register-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #f9f9f9;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #28a745;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #218838;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-link p {
+            margin: 0;
+        }
+
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <script>
+        function hashPassword() {
+            var password = document.getElementById('password').value;
+            var salt = document.getElementById('salt').value;
+            var encoder = new TextEncoder();
+            var data = encoder.encode(password + salt);
+
+            window.crypto.subtle.digest('SHA-256', data).then(function(digest) {
+                var hashArray = Array.from(new Uint8Array(digest));
+                var hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                document.getElementById('password').value = hashHex;
+                document.getElementById('registerForm').submit();
+            });
+
+            return false; // Prevent the form from submitting before the password is hashed
+        }
+    </script>
+{% endblock %}
+

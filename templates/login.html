@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="loginForm" method="post" onsubmit="return hashPassword();">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required onblur="fetchSalt()">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <input type="hidden" id="salt" name="salt">
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <div class="register-link">
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+        </div>
+    </div>
+
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background-color: #f9f9f9;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .register-link p {
+            margin: 0;
+        }
+
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+
+    <script>
+        let salt = '';
+
+        function fetchSalt() {
+            const username = document.getElementById('username').value;
+            if (username) {
+                fetch('/get_salt', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.salt) {
+                        salt = data.salt;
+                    } else {
+                        alert('User not found');
+                    }
+                })
+                .catch(error => console.error('Error fetching salt:', error));
+            }
+        }
+
+        function hashPassword() {
+            const password = document.getElementById('password').value;
+            if (password && salt) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password + salt);
+
+                window.crypto.subtle.digest('SHA-256', data).then(digest => {
+                    const hashArray = Array.from(new Uint8Array(digest));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    document.getElementById('password').value = hashHex;
+                    document.getElementById('loginForm').submit();
+                });
+
+                return false; // Prevent the form from submitting before the password is hashed
+            }
+        }
+    </script>
+{% endblock %}

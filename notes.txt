@@ -1,0 +1,4 @@
+We'll use markdown-it for rendering in the future.
+<script type="module">
+import markdownIt from 'https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/+esm'
+</script>

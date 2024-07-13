@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>{{ blog.name }}</h2>
+  <a href="{{ url_for('create_article', blog_id=blog.id) }}">New Article</a>
+  <ul>
+  {% for article in articles %}
+    <li>
+      <h3><a href="{{ url_for('article', article_id=article.id) }}">{{ article.title }}</a></h3>
+      <a href="{{ url_for('save_article', article_id=article.id) }}">Edit</a>
+      <form action="{{ url_for('delete_article', article_id=article.id) }}" method="post" style="display:inline;">
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+{% endblock %}
