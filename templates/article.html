@@ -1,15 +1,108 @@
 {% extends 'base.html' %}
 
 {% block content %}
+  <style>
+    h1 {
+      font-size: 3em;
+      font-weight: bold;
+      color: #2c3e50;
+      text-align: center;
+      margin-top: 20px;
+    }
+    h2 {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #34495e;
+      text-align: center;
+      margin-top: 15px;
+    }
+    h3 {
+      font-size: 2em;
+      font-weight: bold;
+      color: #7f8c8d;
+      text-align: left;
+      margin-top: 10px;
+    }
+    h4 {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #95a5a6;
+      text-align: left;
+      margin-top: 5px;
+    }
+    h5 {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #004547;
+      text-align: left;
+      margin-top: 5px;
+    }
+    h6 {
+      font-size: 1em;
+      font-weight: bold;
+      color: hsl(204, 35%, 44%);
+      text-align: left;
+      margin-top: 5px;
+    }
+    #html-content p {
+      font-size: 1.2em;
+      line-height: 1.6;
+      color: #2c3e50;
+      margin: 15px 0;
+    }
+    article {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #ecf0f1;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    footer {
+      text-align: right;
+      margin-top: 20px;
+      font-size: 0.9em;
+      color: #95a5a6;
+    }
+  </style>
+
   <h1>{{ blog_title }}</h1>
   <article>
-    <h2>{{ article.title }}</h2>
-    <h3>{{ article.subtitle }}</h3>
-    <div>
-      <p>{{ article.content }}</p>
+    <h1>{{ article.title }}</h1>
+    <h2>{{ article.subtitle }}</h2>
+    <div id="markdown-content" style="display:none;">
+      {{ article.content -}}
     </div>
+    <div id="html-content"></div>
     <footer>
       <!--<p>Written by: {{ article.authors }}</p>-->
     </footer>
   </article>
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var md = window.markdownit();
+      var markdownContent = document.getElementById('markdown-content').innerText.trim();
+      var htmlContent = md.render(markdownContent);
+      document.getElementById('html-content').innerHTML = htmlContent;
+      document.getElementById('markdown-content').style.display = 'none';
+
+      // Function to adjust heading levels within the html-content div
+      function adjustHeadingLevels() {
+        var contentDiv = document.getElementById('html-content');
+        for (let level = 1; level <= 6; level++) {
+          let headings = contentDiv.querySelectorAll(`h${level}`);
+          headings.forEach(heading => {
+            let newLevel = Math.min(level + 2, 6); // Cap the level at 6
+            let newHeading = document.createElement(`h${newLevel}`);
+            newHeading.innerHTML = heading.innerHTML;
+            heading.replaceWith(newHeading);
+          });
+        }
+      }
+
+      // Adjust the heading levels
+      adjustHeadingLevels();
+    });
+  </script>
 {% endblock %}

@@ -3,12 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Blog</title>
+    <title>LiveLog (pre-alpha)</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <header>
-        <h1><a href="{{ url_for('index') }}">My Blog</a></h1>
+        <div class="menu-icon" aria-label="Menu" aria-expanded="false" aria-controls="menu" role="button" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </div>
+        <nav id="menu" class="menu" role="menu">
+            <ul>
+                <li><a href="#"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="#"><i class="fas fa-newspaper"></i> Stories</a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> Stats</a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="{{ url_for('logout')}}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
     </header>
     <main>
         {% with messages = get_flashed_messages() %}
@@ -22,5 +34,15 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('menu');
+            const menuIcon = document.querySelector('.menu-icon');
+            const isOpen = menuIcon.getAttribute('aria-expanded') === 'true';
+            
+            menu.style.display = isOpen ? 'none' : 'block';
+            menuIcon.setAttribute('aria-expanded', !isOpen);
+        }
+    </script>
 </body>
 </html>

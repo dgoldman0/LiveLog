@@ -11,6 +11,7 @@ header {
     color: white;
     padding: 1rem;
     text-align: center;
+    position: relative; /* Added to position the menu icon */
 }
 
 header a {
@@ -18,7 +19,7 @@ header a {
     text-decoration: none;
 }
 
-main {
+.main {
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
@@ -86,4 +87,87 @@ form button {
 
 form button:hover {
     background-color: #555;
+}
+
+/* Added styles for menu icon and menu */
+.menu-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.menu {
+    display: none;
+    position: absolute;
+    top: 60px; /* Adjust based on header height */
+    right: 10px;
+    background-color: white;
+    color: black;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 8px; /* To match other elements */
+    z-index: 1000;
+    overflow: hidden; /* To ensure rounded corners apply to the whole menu */
+    width: 200px; /* Adjust width to your preference */
+}
+
+.menu ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu ul li {
+    padding: 10px 20px;
+    border-bottom: none;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+    display: flex;
+    align-items: center;
+}
+
+.menu ul li:last-child {
+    border-bottom: none;
+}
+
+.menu ul li a {
+    text-decoration: none;
+    color: black;
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.menu ul li a i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.menu ul li a:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Remove box shadow and adjust padding for a seamless look */
+.menu ul li {
+    padding: 0;
+    border: none;
+}
+
+.menu ul li a {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 10px;
+}
+
+.menu ul li a:last-child {
+    border-bottom: none;
+}
+
+/* Improved hover effect */
+.menu ul li:hover {
+    background-color: #f7f7f7;
+    color: #333;
 }

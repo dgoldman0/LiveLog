@@ -93,6 +93,11 @@ def login():
 
     return render_template('login.html')
 
+@app.route('/user/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
+
 @app.route('/blog/<int:blog_id>')
 def blog(blog_id):
     conn = get_db_connection()
