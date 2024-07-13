@@ -20,6 +20,11 @@ def init_db():
         db = get_db_connection()
         with app.open_resource('schema.sql') as f:
             db.executescript(f.read().decode('utf8'))
+        # Create a default user. Requires generating a salt and hashing the password.
+        salt = binascii.hexlify(os.urandom(16)).decode()
+        password = 'password'
+        salted_password = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
+        db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', salted_password, salt))
         db.commit()
 
 @app.route('/')
@@ -154,6 +159,13 @@ def view_article(article_id):
     conn.close()
     return render_template('article.html', article=article, blog_id=blog_id)
 
+@app.route('/user/<int:user_id>/articles', methods=('GET',))
+def articles(user_id):
+    conn = get_db_connection()
+    articles = conn.execute('SELECT * FROM articles WHERE user_id = ? AND DRAFT = FALSE', (user_id,)).fetchall()
+    conn.close()
+    return render_template('articles.html', articles=articles)
+
 @app.route('/user/<int:user_id>/drafts', methods=('GET',))
 def drafts(user_id):
     if session.get('user_id') is None:
@@ -187,7 +199,7 @@ def draft_article(article_id):
     return render_template('edit_article.html', article=article)
 
 @app.route('/article/<int:article_id>/post', methods=('POST',))
-def post_article(blog_id, article_id):
+def post_article(article_id):
     conn = get_db_connection()
     article = conn.execute('SELECT * FROM articles WHERE id = ?', (article_id,)).fetchone()
 
@@ -197,10 +209,10 @@ def post_article(blog_id, article_id):
 
     conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ? WHERE id = ?', (title, subtitle, content, article_id))
     # Remove old article tags and add generate new ones.
-    conn.execute('DELETE FROM tags WHERE article_id = ?', (article_id,))
+    conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
     tags = llm.tags.generate_tags(content)
     for tag in tags:
-        conn.execute('INSERT INTO tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
+        conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
     conn.commit()
     conn.close()
     return 'Article posted successfully', 200

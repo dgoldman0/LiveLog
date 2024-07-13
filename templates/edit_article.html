@@ -1,18 +1,110 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h2>Edit Article</h2>
-  <form id="edit-article-form">
-    <label for="title">Title</label>
-    <input type="text" id="title" name="title" value="{{ article.saved_title | e }}">
-    <label for="subtitle">Subtitle</label>
-    <input type="text" id="subtitle" name="subtitle" value="{{ article.saved_subtitle | e }}">
-    <label for="content">Content</label>
-    <textarea id="content" name="content">{{ article.saved_content | e }}</textarea>
-    <button type="submit">Save</button>
-  </form>
-  <p id="status"></p>
+  <div class="form-container">
+    <h2>Edit Article</h2>
+    <form id="edit-article-form">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="{{ article.saved_title | e }}">
+      </div>
+      <div class="form-group">
+        <label for="subtitle">Subtitle</label>
+        <input type="text" id="subtitle" name="subtitle" value="{{ article.saved_subtitle | e }}">
+      </div>
+      <div class="form-group">
+        <label for="content">Content</label>
+        <textarea id="content" name="content">{{ article.saved_content | e }}</textarea>
+      </div>
+      <div class="button-group">
+        <button type="submit" class="btn save-btn">Save</button>
+        <button type="button" id="post-article" class="btn post-btn">Post</button>
+      </div>
+    </form>
+    <p id="status"></p>
+  </div>
   
+  <style>
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background-color: #f9f9f9;
+    }
+
+    .form-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    .form-group textarea {
+      height: 200px;
+      resize: vertical;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .save-btn {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    .save-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .post-btn {
+      background-color: #28a745;
+      color: #fff;
+    }
+
+    .post-btn:hover {
+      background-color: #218838;
+    }
+
+    #status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 16px;
+      color: #333;
+    }
+  </style>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const form = document.getElementById('edit-article-form');
@@ -20,6 +112,7 @@
       const subtitleInput = document.getElementById('subtitle');
       const contentInput = document.getElementById('content');
       const status = document.getElementById('status');
+      const postButton = document.getElementById('post-article');
 
       let initialTitle = titleInput.value;
       let initialSubtitle = subtitleInput.value;
@@ -28,6 +121,10 @@
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         saveDraft();
+      });
+
+      postButton.addEventListener('click', function () {
+        postArticle();
       });
 
       function hasChanges() {
@@ -59,6 +156,27 @@
         })
         .catch(error => {
           status.textContent = 'Error saving draft: ' + error;
+        });
+      }
+
+      function postArticle() {
+        const formData = new FormData(form);
+
+        fetch("{{ url_for('post_article', article_id=article.id) }}", {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.text();
+        })
+        .then(data => {
+          status.textContent = 'Article posted at ' + new Date().toLocaleTimeString();
+        })
+        .catch(error => {
+          status.textContent = 'Error posting article: ' + error;
         });
       }
 
