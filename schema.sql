@@ -9,6 +9,7 @@ CREATE TABLE users (
     salt TEXT NOT NULL
 );
 
+-- Keeps a list of blogs. A user can have multiple blogs.
 CREATE TABLE blogs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -16,6 +17,7 @@ CREATE TABLE blogs (
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
+-- Keeps a list of articles. The saved_* fields are used to store the last saved state of the article in case the user wants to revert to a previous version.
 CREATE TABLE articles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL DEFAULT '',
@@ -31,6 +33,18 @@ CREATE TABLE articles (
     last_saved TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     blog_id INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (blog_id) REFERENCES blogs (id)
+);
+
+-- Keeps an ongoing list of article revisions and their date. PRIMARY KEY is a composite of article_id and revision_date
+CREATE TABLE article_revisions (
+    article_id INTEGER NOT NULL,
+    revision_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    title TEXT NOT NULL DEFAULT '',
+    subtitle TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL DEFAULT '',
+    tldr TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (article_id) REFERENCES articles (id),
+    PRIMARY KEY (article_id, revision_date)
 );
 
 -- A list of additional authors for an article (only one primary author but multiple co-authors are allowed)

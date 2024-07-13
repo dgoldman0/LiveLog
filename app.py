@@ -214,6 +214,8 @@ def post_article(article_id):
     tags = llm.articles.generate_tags(content)
     for tag in tags:
         conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
+    # Add to revision history
+    conn.execute('INSERT INTO article_revisions (article_id, title, subtitle, content, tldr) VALUES (?, ?, ?, ?, ?)', (article_id, title, subtitle, content, tldr))
     conn.commit()
     conn.close()
     return 'Article posted successfully', 200
