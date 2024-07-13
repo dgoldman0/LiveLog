@@ -22,9 +22,11 @@ def init_db():
             db.executescript(f.read().decode('utf8'))
         # Create a default user. Requires generating a salt and hashing the password.
         salt = binascii.hexlify(os.urandom(16)).decode()
-        password = 'password'
-        salted_password = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
-        db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', salted_password, salt))
+        data = "password" + salt
+
+        # Perform a single SHA-256 hash
+        hashed_password = hashlib.sha256(data.encode()).hexdigest()
+        db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', hashed_password, salt))
         db.commit()
 
 @app.route('/')
@@ -133,6 +135,7 @@ def delete_blog(blog_id):
 def tags():
     conn = get_db_connection()
     tags = conn.execute('SELECT tag, COUNT(article_id) as article_count FROM article_tags GROUP BY tag').fetchall()
+    tags = [(tag['tag'], tag['article_count']) for tag in tags]
     conn.close()
     return render_template('tags.html', tags=tags)
 
@@ -236,8 +239,7 @@ def post_article(article_id):
         SELECT tag, COUNT(article_id) as article_count
         FROM article_tags
         GROUP BY tag"""    
-    conn.execute(query)
-    results = conn.fetchall()
+    results = conn.execute(query).fetchall()
     all_tags = {row[0]: row[1] for row in results}
 
     tags = llm.articles.generate_tags(content, all_tags)

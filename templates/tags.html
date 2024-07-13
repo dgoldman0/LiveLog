@@ -2,9 +2,90 @@
 
 {% block content %}
   <h1>Tags</h1>
-  <ul>
-    {% for tag, count in tags.items() %}
-      <li><a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a> ({{ count }})</li>
+  <div class="tags-container">
+    {% for tag, count in tags %}
+      <div class="tag-item" data-count="{{ count }}">
+        <a href="{{ url_for('tag', tag=tag) }}" class="tag-link">{{ tag }}</a>
+        <span class="tag-count">({{ count }})</span>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
+
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+    }
+
+    header {
+        background-color: #333;
+        color: #fff;
+        padding: 10px 0;
+        text-align: center;
+    }
+
+    header h1 a {
+        color: #fff;
+        text-decoration: none;
+    }
+
+    main {
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    .tags-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .tag-item {
+        background-color: #007bff;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tag-link {
+        color: white;
+        text-decoration: none;
+        margin-right: 5px;
+    }
+
+    .tag-count {
+        font-size: 0.9em;
+        opacity: 0.8;
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var tags = document.querySelectorAll('.tag-item');
+        var minCount = Infinity, maxCount = -Infinity;
+
+        tags.forEach(function(tag) {
+            var count = parseInt(tag.getAttribute('data-count'));
+            if (count < minCount) minCount = count;
+            if (count > maxCount) maxCount = count;
+        });
+
+        tags.forEach(function(tag) {
+            var count = parseInt(tag.getAttribute('data-count'));
+            var size = ((count - minCount) / (maxCount - minCount)) * 2 + 1; // size between 1 and 3
+            tag.style.fontSize = size + 'em';
+        });
+    });
+  </script>
 {% endblock %}
