@@ -100,7 +100,7 @@ def get_conversation_history():
     user_id = session.get('user_id')
     if user_id is None:
         return 'User not logged in!', 404
-    return llm.assistant.get_conversation_history(user_id)
+    return llm.assistant.get_conversation_history(user_id), 200
 
 @app.route('/assistant/message', methods=('POST', ))
 def process_message():
@@ -111,7 +111,7 @@ def process_message():
     input_text = request.form['user_input']
 
     response = llm.assistant.process_input(user_id, input_text)
-    return jsonify({'response': response})
+    return response, 200
     
 
 @app.route('/blog/<int:blog_id>')
