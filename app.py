@@ -1,12 +1,29 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session
 from data import get_db_connection
 import os
+import json
 import hashlib
 import binascii
 import llm.articles
+import llm.assistant
 
 app = Flask(__name__)
 app.secret_key = 'super secret key 12294ffee'
+
+def init_db():
+    with app.app_context():
+        db = get_db_connection()
+        with app.open_resource('schema.sql') as f:
+            db.executescript(f.read().decode('utf8'))
+        # Create a default user. Requires generating a salt and hashing the password.
+        salt = binascii.hexlify(os.urandom(16)).decode()
+        data = "password" + salt
+
+        # Perform a single SHA-256 hash
+        hashed_password = hashlib.sha256(data.encode()).hexdigest()
+        db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', hashed_password, salt))
+        db.commit()
+        db.close()
 
 @app.route('/')
 def index():
@@ -76,6 +93,26 @@ def login():
 def logout():
     session.pop('user_id', None)
     return redirect(url_for('login'))
+
+# Primary assistant endpoint for web interface. Returns text or markdown, not HTML.
+@app.route('/assistant/history', methods=('GET', ))
+def get_conversation_history():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return 'User not logged in!', 404
+    return llm.assistant.get_conversation_history(user_id)
+
+@app.route('/assistant/message', methods=('POST', ))
+def process_message():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return 'User not logged in!', 404
+    
+    input_text = request.form['user_input']
+
+    response = llm.assistant.process_input(user_id, input_text)
+    return jsonify({'response': response})
+    
 
 @app.route('/blog/<int:blog_id>')
 def blog(blog_id):

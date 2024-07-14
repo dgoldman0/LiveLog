@@ -202,7 +202,36 @@
                 newOutput.textContent = `> ${command}`;
                 output.appendChild(newOutput);
                 input.value = '';
-                output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                // Execute call to server to process url for message
+                const formData = new FormData();
+                formData.append('user_input', command);
+                fetch(`{{ url_for('process_message') }}`, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    // Check HTTP response code
+                    if (response.status == 200) {
+                        return response.text().then(data => {
+                            const newOutput = document.createElement('div');
+                            // Convert data into markdown
+                            const md = window.markdownit();
+                            newOutput.innerHTML = md.render(data);
+                            output.appendChild(newOutput);
+                            output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                        });
+                    } else {
+                        const newOutput = document.createElement('div');
+                        newOutput.textContent = 'Error processing command';
+                        output.appendChild(newOutput);
+                        output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                    }
+                }).catch(error => {
+                    const newOutput = document.createElement('div');
+                    newOutput.textContent = 'Network error';
+                    output.appendChild(newOutput);
+                    output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                });
+
             }
         }
     </script>

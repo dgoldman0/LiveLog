@@ -13,6 +13,7 @@ CREATE TABLE users (
 CREATE TABLE conversation_history (
     user_id INTEGER NOT NULL,
     centry TEXT NOT NULL,
+    stamp DEFAULT CURRENT_TIMESTAMP,   
     FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
