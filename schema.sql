@@ -24,6 +24,8 @@ CREATE TABLE articles (
     subtitle TEXT NOT NULL DEFAULT '',
     content TEXT NOT NULL DEFAULT '',
     tldr TEXT NOT NULL DEFAULT '',
+    evaluation TEXT NOT NULL DEFAULT '',
+    score INTEGER NOT NULL DEFAULT 0,
     saved_title TEXT NOT NULL DEFAULT '',
     saved_subtitle TEXT NOT NULL DEFAULT '',
     saved_content TEXT NOT NULL DEFAULT '',
@@ -32,7 +34,8 @@ CREATE TABLE articles (
     draft BOOLEAN DEFAULT TRUE,
     last_saved TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     blog_id INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (blog_id) REFERENCES blogs (id)
+    FOREIGN KEY (blog_id) REFERENCES blogs (id),
+    FOREIGN KEY (author_id) REFERENCES users (id)
 );
 
 -- Keeps an ongoing list of article revisions and their date. PRIMARY KEY is a composite of article_id and revision_date

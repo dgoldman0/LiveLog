@@ -49,7 +49,7 @@ def generate_tldr(content):
     
     return response
 
-# Evaluate article
+# Evaluate article: should edit to evaluate title and subtitle too
 def evaluate_article(content):
     rubric = """### Comprehensive Content Quality Rubric
 
@@ -196,10 +196,12 @@ Evaluate the following content based on the comprehensive content quality rubric
             max_tokens=1000
         ).choices[0].message.content.strip()
 
-    # Get the final score
-    response = response.split('\n')[-1].lower()
-    # Double check that the format is correct as a valid score.
-    if response in ['exceptional', 'very good', 'good', 'satisfactory', 'needs improvement']:
-        # Convert to numeric score with exceptional = 4, very good = 3, good = 2, satisfactory = 1, needs improvement = 0
-        score_map = {'exceptional': 4, 'very good': 3, 'good': 2, 'satisfactory': 1, 'needs improvement': 0}
-        return score_map[response]
+   
+    while True:
+      # Get the final score
+      result = response.split('\n')[-1].lower()
+      # Double check that the format is correct as a valid score.
+      if result in ['exceptional', 'very good', 'good', 'satisfactory', 'needs improvement']:
+         # Convert to numeric score with exceptional = 4, very good = 3, good = 2, satisfactory = 1, needs improvement = 0
+         score_map = {'exceptional': 4, 'very good': 3, 'good': 2, 'satisfactory': 1, 'needs improvement': 0}
+         return response, score_map[result]

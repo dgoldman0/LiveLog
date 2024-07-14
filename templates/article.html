@@ -1,108 +1,157 @@
-{% extends 'base.html' %}
+{% extends 'base_old.html' %}
 
 {% block content %}
-  <style>
-    h1 {
-      font-size: 3em;
-      font-weight: bold;
-      color: #2c3e50;
-      text-align: center;
-      margin-top: 20px;
-    }
-    h2 {
-      font-size: 2.5em;
-      font-weight: bold;
-      color: #34495e;
-      text-align: center;
-      margin-top: 15px;
-    }
-    h3 {
-      font-size: 2em;
-      font-weight: bold;
-      color: #7f8c8d;
-      text-align: left;
-      margin-top: 10px;
-    }
-    h4 {
-      font-size: 1.5em;
-      font-weight: bold;
-      color: #95a5a6;
-      text-align: left;
-      margin-top: 5px;
-    }
-    h5 {
-      font-size: 1.2em;
-      font-weight: bold;
-      color: #004547;
-      text-align: left;
-      margin-top: 5px;
-    }
-    h6 {
-      font-size: 1em;
-      font-weight: bold;
-      color: hsl(204, 35%, 44%);
-      text-align: left;
-      margin-top: 5px;
-    }
-    #html-content p {
-      font-size: 1.2em;
-      line-height: 1.6;
-      color: #2c3e50;
-      margin: 15px 0;
-    }
-    article {
-      padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: #ecf0f1;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    footer {
-      text-align: right;
-      margin-top: 20px;
-      font-size: 0.9em;
-      color: #95a5a6;
-    }
-  </style>
+<style>
+  h1, h2 {
+    text-align: center;
+    margin-top: 20px;
+  }
+  h1 {
+    font-size: 3em;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+  h2 {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #34495e;
+  }
+  #html-content p {
+    font-size: 1.2em;
+    line-height: 1.6;
+    color: #2c3e50;
+    margin: 15px 0;
+  }
+  article {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  footer {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: #95a5a6;
+  }
+  /* Toolbar styles */
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 15px 0;
+    border-top: 1px solid #bdc3c7;
+    border-bottom: 1px solid #bdc3c7;
+  }
+  .btn {
+    font-size: 24px; /* Adjust icon size */
+    padding: 5px;
+    margin: 5px;
+    cursor: pointer;
+    border: none;
+    border-radius: 20%; /* Circular buttons */
+    background-color: #3498db;
+    color: white;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+  }
+  .btn:hover {
+    background-color: #2980b9;
+  }
+  /* Overlay styles */
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    overflow: auto;
+  }
+  .overlay-content {
+    background-color: #ecf0f1;
+    margin: 10% auto;
+    padding: 20px;
+    width: 60%;
+    border-radius: 8px;
+    max-width: 800px;
+  }
+  .close-btn {
+    float: right;
+    font-size: 1.5em;
+    cursor: pointer;
+  }
+</style>
 
-  <h1>{{ blog_title }}</h1>
-  <article>
-    <h1>{{ article.title }}</h1>
-    <h2>{{ article.subtitle }}</h2>
-    <div id="markdown-content" style="display:none;">
-      {{ article.content -}}
-    </div>
-    <div id="html-content"></div>
-    <footer>
-      <!--<p>Written by: {{ article.authors }}</p>-->
-    </footer>
-  </article>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var md = window.markdownit();
-      var markdownContent = document.getElementById('markdown-content').innerText.trim();
-      var htmlContent = md.render(markdownContent);
-      document.getElementById('html-content').innerHTML = htmlContent;
-      document.getElementById('markdown-content').style.display = 'none';
+<h1>{{ blog_title }}</h1>
+<article>
+  <h1>{{ article.title }}</h1>
+  <h2>{{ article.subtitle }}</h2>
 
-      // Function to adjust heading levels within the html-content div
-      function adjustHeadingLevels() {
-        var contentDiv = document.getElementById('html-content');
-        for (let level = 1; level <= 6; level++) {
-          let headings = contentDiv.querySelectorAll(`h${level}`);
-          headings.forEach(heading => {
-            let newLevel = Math.min(level + 2, 6); // Cap the level at 6
-            let newHeading = document.createElement(`h${newLevel}`);
-            newHeading.innerHTML = heading.innerHTML;
-            heading.replaceWith(newHeading);
-          });
-        }
-      }
+  <div class="toolbar">
+    {% if article.author_id == user_id %}
+      <button id="evaluate-btn" class="btn" title="Evaluate"><i class="fas fa-calculator"></i></button>
+      <a href="{{ url_for('draft_article', article_id=article.id) }}" class="btn" title="Edit Article"><i class="fas fa-edit"></i></a>
+    {% endif %}
+  </div>
 
-      // Adjust the heading levels
-      adjustHeadingLevels();
+  <div id="markdown-content" style="display:none;">
+    {{ article.content -}}
+  </div>
+  <div id="html-content"></div>
+
+  <footer>
+    <!--<p>Written by: {{ article.authors }}</p>-->
+  </footer>
+</article>
+
+<!-- Overlay for Evaluation -->
+<div id="overlay" class="overlay">
+  <div class="overlay-content">
+    <span class="close-btn" id="close-overlay">&times;</span>
+    <div id="evaluation-content"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var md = window.markdownit();
+    var markdownContent = document.getElementById('markdown-content').innerText.trim();
+    var htmlContent = md.render(markdownContent);
+    document.getElementById('html-content').innerHTML = htmlContent;
+    document.getElementById('markdown-content').style.display = 'none';
+
+    var evaluateBtn = document.getElementById('evaluate-btn');
+    var overlay = document.getElementById('overlay');
+    var closeOverlay = document.getElementById('close-overlay');
+    var evaluationContent = document.getElementById('evaluation-content');
+
+    if (evaluateBtn) {
+      evaluateBtn.addEventListener('click', function() {
+        var evaluationMarkdown = `{{ article.evaluation | escape }}`.trim();
+        var evaluationHtml = md.render(evaluationMarkdown);
+        evaluationContent.innerHTML = evaluationHtml;
+        overlay.style.display = 'block';
+      });
+    }
+
+    closeOverlay.addEventListener('click', function() {
+      overlay.style.display = 'none';
     });
-  </script>
+
+    window.addEventListener('click', function(event) {
+      if (event.target == overlay) {
+        overlay.style.display = 'none';
+      }
+    });
+  });
+</script>
 {% endblock %}

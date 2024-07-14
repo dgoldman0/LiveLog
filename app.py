@@ -170,6 +170,7 @@ def view_article(article_id):
     conn = get_db_connection()
     # Need to adjust so that I get the blog id
     article = conn.execute('SELECT * FROM articles WHERE id = ?', (article_id,)).fetchone()
+    author = conn.execute('SELECT username FROM users WHERE id = ?', (article['author_id'],)).fetchone()
     # Check if article exists. 
     if article is None:
         return render_template('article_not_found.html')
@@ -181,7 +182,10 @@ def view_article(article_id):
     # Check what blog the article belongs to, if any. Will be 0 if it doesn't belong to a blog.
     blog_id = conn.execute('SELECT blog_id FROM articles WHERE id = ?', (article_id,)).fetchone()
     conn.close()
-    return render_template('article.html', article=article, blog_id=blog_id)
+    # Remove the evaluation if the user is not the author
+    if session.get('user_id') != article['author_id']:
+        article['evaluation'] = None
+    return render_template('article.html', article=article, blog_id=blog_id, author=author, user_id = session.get('user_id'))
 
 @app.route('/user/<int:user_id>/articles', methods=('GET',))
 def articles(user_id):
@@ -222,6 +226,7 @@ def draft_article(article_id):
         return redirect(url_for('login'))
     return render_template('edit_article.html', article=article)
 
+# Going to need to use Celery because things like article evaluation and tag generation can take a long time.
 @app.route('/article/<int:article_id>/post', methods=('POST',))
 def post_article(article_id):
     conn = get_db_connection()
@@ -236,10 +241,8 @@ def post_article(article_id):
     content = article['saved_content']
 
     tldr = llm.articles.generate_tldr(content)
-    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, article_id))
-    # Remove old article tags and add generate new ones.
-    conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
-    # Build a dictionary of tags and how many articles they are associated with. We can do that by looking at article_tags.
+ 
+   # Build a dictionary of tags and how many articles they are associated with. We can do that by looking at article_tags.
     query = """
         SELECT tag, COUNT(article_id) as article_count
         FROM article_tags
@@ -248,6 +251,16 @@ def post_article(article_id):
     all_tags = {row[0]: row[1] for row in results}
 
     tags = llm.articles.generate_tags(content, all_tags)
+ 
+    evaluation, score = llm.articles.evaluate_article(content)
+    if score == 0:
+        return 'Article quality is too low to post!', 400
+    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, evaluation = ?, score = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, evaluation, score,  article_id))
+    
+    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, article_id))
+    # Remove old article tags and add generate new ones.
+    conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
+ 
     for tag in tags:
         # Set article's tags
         conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))

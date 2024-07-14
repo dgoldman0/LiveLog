@@ -6,6 +6,144 @@
     <title>LiveLog (pre-alpha)</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: #333;
+            color: #fff;
+        }
+        /* Added styles for menu icon and menu */
+        .menu-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 60px; /* Adjust based on header height */
+            right: 10px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 8px; /* To match other elements */
+            z-index: 1000;
+            overflow: hidden; /* To ensure rounded corners apply to the whole menu */
+            width: 200px; /* Adjust width to your preference */
+        }
+
+        .menu ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu ul li {
+            padding: 10px 20px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+            display: flex;
+            align-items: center;
+        }
+
+        .menu ul li:last-child {
+            border-bottom: none;
+        }
+
+        .menu ul li a {
+            text-decoration: none;
+            color: black;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        .menu ul li a i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .menu ul li a:hover {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        /* Remove box shadow and adjust padding for a seamless look */
+        .menu ul li {
+            padding: 0;
+            border: none;
+        }
+
+        .menu ul li a {
+            border-bottom: 1px solid #ddd;
+            padding: 15px 20px;
+        }
+
+        .menu ul li a:last-child {
+            border-bottom: none;
+        }
+
+        /* Improved hover effect */
+        .menu ul li:hover {
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        main {
+            display: flex;
+            flex: 1;
+            padding: 1rem;
+        }
+        .content {
+            flex: 2;
+            padding: 1rem;
+        }
+        .console {
+            position: sticky;
+            top: 0; /* Adjust top as necessary */
+            width: 30%; /* Set width for the console */
+            height: 100vh; /* Full height viewport */
+            overflow-y: auto; /* Scroll inside the console */
+            padding: 1rem;
+            background-color: #f0f0f0;
+            border-right: 1px solid #ccc;
+        }
+        .console-output {
+            background-color: #333;
+            color: #fff;
+            padding: 0.5rem;
+            height: 80vh; /* Adjust height as necessary */
+        }
+        .console-input {
+            display: flex;
+        }
+        .console-input input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+        }
+        .console-input button {
+            padding: 0.5rem;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -18,21 +156,30 @@
                 <li><a href="#"><i class="fas fa-newspaper"></i> Stories</a></li>
                 <li><a href="#"><i class="fas fa-chart-bar"></i> Stats</a></li>
                 <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
-                <li><a href="{{ url_for('logout')}}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
     </header>
     <main>
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <ul>
-              {% for message in messages %}
-                <li>{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
+        <div class="console">
+            <div class="console-output" id="console-output"></div>
+            <div class="console-input">
+                <input type="text" id="console-input" placeholder="Enter command...">
+                <button onclick="submitCommand()">Submit</button>
+            </div>
+        </div>
+        <div class="content">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <ul>
+                  {% for message in messages %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+            {% block content %}{% endblock %}
+        </div>
     </main>
     <script>
         function toggleMenu() {
@@ -42,6 +189,20 @@
             
             menu.style.display = isOpen ? 'none' : 'block';
             menuIcon.setAttribute('aria-expanded', !isOpen);
+        }
+
+        function submitCommand() {
+            const input = document.getElementById('console-input');
+            const output = document.getElementById('console-output');
+            const command = input.value;
+
+            if (command) {
+                const newOutput = document.createElement('div');
+                newOutput.textContent = `> ${command}`;
+                output.appendChild(newOutput);
+                input.value = '';
+                output.scrollTop = output.scrollHeight; // Scroll to the bottom
+            }
         }
     </script>
 </body>
