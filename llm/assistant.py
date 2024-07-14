@@ -11,6 +11,20 @@ def process_input(user_id, input_text):
     # Get convesation history from the database.
     conn = data.get_db_connection()
     conversation_history = conn.execute('SELECT centry FROM conversation_history WHERE user_id = ? ORDER BY stamp DESC', (user_id,)).fetchall()
+    system_message = """You are a voxsite portal service interface. Your task is to consider the conversation provided and determine whether one of the following commands should be executed.
+    
+    create() - Create a new livelog entry.
+    title(id, title) - Set the title of the livelog entry with the provided id
+    title(id) - Get the title of the livelog entry with the provided id
+    subtitle(id, subtitle) - Set the subtitle of the livelog entry with the provided id
+    subtitle(id) - Get the subtitle of the livelog entry with the provided id
+    content(id, content) - Set the content of the livelog entry with the provided id
+    content(id) - Get the content of the livelog entry with the provided id
+    evaluation(id) - Get the evaluation of the livelog entry with the provided id
+    respond() - Respond to the user's input immediately
+    
+    Respond only with one of the commands above."""
+
     system_message = """You are the voxsite portal for LiveLog. LiveLog is among the first voxsite platforms dedicated to authorship.
     
     LiveLog has a shared data model. Users agree to share their content to improve the voxsite, and LiveLog creates a tailored voxsite for the author, based on their own content. While there will be a web interface for now, the goal is to have the voxsite [GopherAI](https://github.com/dgoldman0/gopherAI) ready from early on.
