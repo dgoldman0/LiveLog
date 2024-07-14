@@ -9,6 +9,13 @@ CREATE TABLE users (
     salt TEXT NOT NULL
 );
 
+-- Holds the currrent conversation history for a user, where each entry is encoded JSON format
+CREATE TABLE conversation_history (
+    user_id INTEGER NOT NULL,
+    centry TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
 -- Keeps a list of blogs. A user can have multiple blogs.
 CREATE TABLE blogs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

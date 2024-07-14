@@ -114,11 +114,11 @@
         }
         .console {
             position: sticky;
-            top: 0; /* Adjust top as necessary */
+            top: 10px; /* Adjust top as necessary */
             width: 30%; /* Set width for the console */
             height: 100vh; /* Full height viewport */
             overflow-y: auto; /* Scroll inside the console */
-            padding: 1rem;
+            padding: 0.5rem;
             background-color: #f0f0f0;
             border-right: 1px solid #ccc;
         }
@@ -126,7 +126,7 @@
             background-color: #333;
             color: #fff;
             padding: 0.5rem;
-            height: 80vh; /* Adjust height as necessary */
+            height: 85vh; /* Adjust height as necessary */
         }
         .console-input {
             display: flex;
@@ -159,12 +159,13 @@
                 <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
             </ul>
         </nav>
+        <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
     </header>
     <main>
         <div class="console">
             <div class="console-output" id="console-output"></div>
             <div class="console-input">
-                <input type="text" id="console-input" placeholder="Enter command...">
+                <input type="text" id="console-input" placeholder="Enter your thoughts..." onkeydown="if(event.key === 'Enter') submitCommand()">
                 <button onclick="submitCommand()">Submit</button>
             </div>
         </div>
