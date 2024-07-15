@@ -12,6 +12,7 @@
             flex-direction: column;
             min-height: 100vh;
             margin: 0;
+            background-color: #007e91;
         }
         header {
             display: flex;
@@ -21,6 +22,22 @@
             background-color: #333;
             color: #fff;
         }
+        /* Match scroll bar colors to the theme */
+        ::-webkit-scrollbar {
+           width: 12px; /* Width of the scrollbar */
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* Background color of the scrollbar track */
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888; /* Color of the scrollbar thumb */
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; /* Color of the scrollbar thumb when hovered */
+        }        
         /* Added styles for menu icon and menu */
         .menu-icon {
             position: absolute;
@@ -116,11 +133,13 @@
             position: sticky;
             top: 10px; /* Adjust top as necessary */
             width: 30%; /* Set width for the console */
-            height: 100vh; /* Full height viewport */
+            height: 92vh; /* Full height viewport */
             overflow-y: auto; /* Scroll inside the console */
             padding: 0.5rem;
-            background-color: #f0f0f0;
             border-right: 1px solid #ccc;
+            background-color: #0291a8;
+            /* Rounded corners for a modern look */
+            border-radius: 8px;
         }
 
         .console-output {
@@ -129,6 +148,7 @@
             padding: 0.5rem;
             height: 85vh; /* Adjust height as necessary */
             overflow-y: auto; /* Scroll inside the output */
+            border-radius: 6px;
         }
 
         .console-input {
@@ -154,18 +174,6 @@
             margin-left: 0.5rem; /* Add margin to separate button from input */
         }
 
-        /* Style for the ordered list and list items */
-        .console-output ol {
-            padding-left: 1rem; /* Indent the list */
-            margin: 0; /* Remove default margin */
-            background-color:#333; /* Dark background color for list items */
-        }
-
-        .console-output li {
-            margin-bottom: 1rem; /* Add space between list items */
-            background-color:#333; /* Dark background color for list items */
-        }
-
         .console-output a {
             color: #b53eff; /* Dark purple color for links */
             text-decoration: none;
@@ -182,6 +190,34 @@
         .console-output ul {
             margin: 0.5rem 0 0.5rem 1rem; /* Add margin for nested lists */
             padding: 0; /* Remove default padding */
+            background-color: #111; /* Dark background for lists */
+        }
+
+        .console-output li {
+            margin: 0.25rem 0; /* Add space above and below list items */
+            padding: 0; /* Remove default padding */
+            background-color: #111; /* Dark background for lists */
+        }
+
+        /* User message with 3D look */
+        .user-message {
+            background-color: #002a30;
+            color: #b2c1bf;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            border: 1px solid #b2ebf2;
+        }
+
+        /* Assistant message clean and professional */
+        .assistant-message {
+            background-color: #081118;
+            color: #a54f04;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            border: 1px solid #1f425d;
         }
     </style>
 </head>
@@ -214,7 +250,7 @@
               {% if messages %}
                 <ul>
                   {% for message in messages %}
-                    <li>{{ message }}</li>
+                    <li>\{{ message }}</li>
                   {% endfor %}
                 </ul>
               {% endif %}
@@ -234,6 +270,7 @@
 
         function createMessageElement(content, role) {
         const newOutput = document.createElement('div');
+        newOutput.className = role === 'user' ? 'user-message' : 'assistant-message';
         const md = window.markdownit();
         newOutput.innerHTML = md.render(content);
         return newOutput;

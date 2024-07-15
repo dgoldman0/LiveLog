@@ -63,10 +63,11 @@ def get_subtitle(conn, article_id):
     return f"No subtitle found for article with id: {article_id}."
 
 def content(conn, article_id, content):
+    content = content.replace('\\"', '"').replace('\\n', '\n')
     conn.execute('UPDATE articles SET saved_content = ? WHERE id = ?', (content, article_id))
     if conn.total_changes == 0:
         return f"Article with id: {article_id} not found or user is not the author of this article."
-    return f"Draft content has been successfully set for article with id: {article_id}. Operation completed."
+    return f"Draft content has been successfully updated and finalized for article with id: {article_id}. New finalized content:\n\n{content}"
 
 def get_content(conn, article_id):
     content = conn.execute('SELECT content FROM articles WHERE id = ?', (article_id,)).fetchone()
@@ -197,24 +198,21 @@ def execute_command(conn, user_id, conversation_history, input_text, response):
     
     LiveLog has a shared data model. Users agree to share their content to improve the voxsite, and LiveLog creates a tailored voxsite for the author, based on their own content. While there will be a web interface for now, the goal is to have the voxsite [GopherAI](https://github.com/dgoldman0/gopherAI) ready from early on.
     
-
-    If linking to articles, use relative links. For instance,
-    /article/1 for article with id 1.
-    /blog/5 for linking to the blog with id 5.
-
-    You may respond in plain text or markdown. Full markdown is supported. 
-    
-    The most recent message by you is background information that can be used to form a response. It may contain real-time information, including date and time, search results, etc."""
+    If linking to articles, etc., use relative links. For instance,
+    /article/3/draft for linking to draft editor with id 3.
+    /article/1 to view article with id 1.
+    /blog/5 for linking to the blog with id 5."""
 
     messages = [{"role": "system", "content": system_message}]
     for row in conversation_history:
         messages.append(json.loads(row['centry']))
     messages.append({"role": "user", "content": input_text})
     messages.append({"role": "assistant", "content": context})
+    messages.append({"role": "system", "content": "Use the information provided to write a response to the user."})
     response = client.chat.completions.create(
-            model=model,
+            model=model, 
             messages=messages,
-            max_tokens=1000
+            max_tokens=1500
         ).choices[0].message.content.strip()
     conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "assistant", "content": response})))
     return response
@@ -224,6 +222,7 @@ def process_input(user_id, input_text):
     # Get convesation history from the database.
     conn = data.get_db_connection()
     conversation_history = conn.execute('SELECT centry FROM conversation_history WHERE user_id = ? ORDER BY stamp DESC', (user_id,)).fetchall()
+    # Need to decide what to instruct it to do about encoding. Maybe HTML enoding and then it's decoded afterwards in the command? 
     system_message = """You are a voxsite portal service interface. Your task is to consider the conversation provided and determine which one of the following commands should be executed. One must be executed.
     
     There is no need to find the user id, as the system already has it stored.
@@ -235,7 +234,7 @@ def process_input(user_id, input_text):
     title(id) - Get the published title of the livelog entry with the provided id, if it is published, otherwise will get the draft title.
     subtitle(id, subtitle) - Set the draft subtitle of the livelog entry with the provided id
     subtitle(id) - Get the subtitle of the livelog entry with the provided id, if it is published, otherwise will get the draft subtitle.
-    content(id, content) - Set the draft content of the livelog entry with the provided id
+    content(id, content) - Set the draft content of the livelog entry with the provided id. Escape quotes, new lines, etc. as needed.
     content(id) - Get the content of the livelog entry with the provided id, if it is published, otherwise will get the draft content.
     tags(article_id) - List tags for a given article. Leave article_id blank to list all tags and their counts.
     evaluation(id) - Get the evaluation of the livelog entry with the provided id
@@ -260,11 +259,12 @@ def process_input(user_id, input_text):
     If the user wants to know the date or time of the current moment, you should execute the command
     now()
 
-    of
+    or
+
     If the user says "What is the title of my first livelog entry" and conversation history already indicates the title is "My First Livelog Entry", you should execute the command
     response("The title of your first livelog entry is 'My First Livelog Entry'.")
 
-    Use of response is appropriate where the next step is going to be replying directly to the user.
+    Only  one command can be executed. If uncertain of what to do, request further instructions. Use of response is appropriate where the next step is going to be replying directly to the user.
 
     This system is a backend toolkit system, not a system to reply to a end user directly. The only valid output is one of the commands listed.
     """
@@ -279,7 +279,7 @@ def process_input(user_id, input_text):
     response = client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=500
+            max_tokens=1000
         ).choices[0].message.content.strip()
     
     # Get the last line of the response and execute
