@@ -122,26 +122,66 @@
             background-color: #f0f0f0;
             border-right: 1px solid #ccc;
         }
+
         .console-output {
             background-color: #333;
             color: #fff;
             padding: 0.5rem;
             height: 85vh; /* Adjust height as necessary */
+            overflow-y: auto; /* Scroll inside the output */
         }
+
         .console-input {
             display: flex;
+            padding-top: 0.5rem; /* Add padding to separate input from output */
         }
+
         .console-input input {
             flex: 1;
             padding: 0.5rem;
             border: 1px solid #ccc;
+            border-radius: 4px; /* Add border radius for rounded corners */
+            box-sizing: border-box;
         }
+
         .console-input button {
             padding: 0.5rem;
             background-color: #333;
             color: #fff;
             border: none;
+            border-radius: 4px; /* Add border radius for rounded corners */
             cursor: pointer;
+            margin-left: 0.5rem; /* Add margin to separate button from input */
+        }
+
+        /* Style for the ordered list and list items */
+        .console-output ol {
+            padding-left: 1rem; /* Indent the list */
+            margin: 0; /* Remove default margin */
+            background-color:#333; /* Dark background color for list items */
+        }
+
+        .console-output li {
+            margin-bottom: 1rem; /* Add space between list items */
+            background-color:#333; /* Dark background color for list items */
+        }
+
+        .console-output a {
+            color: #b53eff; /* Dark purple color for links */
+            text-decoration: none;
+        }
+
+        .console-output a:hover {
+            text-decoration: underline;
+        }
+
+        .console-output p {
+            margin: 0.5rem 0; /* Add space above and below paragraphs */
+        }
+
+        .console-output ul {
+            margin: 0.5rem 0 0.5rem 1rem; /* Add margin for nested lists */
+            padding: 0; /* Remove default padding */
         }
     </style>
 </head>
@@ -192,16 +232,24 @@
             menuIcon.setAttribute('aria-expanded', !isOpen);
         }
 
+        function createMessageElement(content, role) {
+        const newOutput = document.createElement('div');
+        const md = window.markdownit();
+        newOutput.innerHTML = md.render(content);
+        return newOutput;
+    }
+
         function submitCommand() {
             const input = document.getElementById('console-input');
             const output = document.getElementById('console-output');
             const command = input.value;
 
             if (command) {
-                const newOutput = document.createElement('div');
-                newOutput.textContent = `> ${command}`;
+                const newOutput = createMessageElement(`${command}`, 'user');
                 output.appendChild(newOutput);
                 input.value = '';
+                output.scrollTop = output.scrollHeight; // Scroll to the bottom
+
                 // Execute call to server to process url for message
                 const formData = new FormData();
                 formData.append('user_input', command);
@@ -209,31 +257,48 @@
                     method: 'POST',
                     body: formData
                 }).then(response => {
-                    // Check HTTP response code
                     if (response.status == 200) {
                         return response.text().then(data => {
-                            const newOutput = document.createElement('div');
-                            // Convert data into markdown
-                            const md = window.markdownit();
-                            newOutput.innerHTML = md.render(data);
+                            const newOutput = createMessageElement(data, 'assistant');
                             output.appendChild(newOutput);
                             output.scrollTop = output.scrollHeight; // Scroll to the bottom
                         });
                     } else {
-                        const newOutput = document.createElement('div');
-                        newOutput.textContent = 'Error processing command';
+                        const newOutput = createMessageElement('Error processing command', 'error');
                         output.appendChild(newOutput);
                         output.scrollTop = output.scrollHeight; // Scroll to the bottom
                     }
                 }).catch(error => {
-                    const newOutput = document.createElement('div');
-                    newOutput.textContent = 'Network error';
+                    const newOutput = createMessageElement('Network error', 'error');
                     output.appendChild(newOutput);
                     output.scrollTop = output.scrollHeight; // Scroll to the bottom
                 });
-
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const output = document.getElementById('console-output');
+            fetch(`{{ url_for('get_conversation_history') }}`)
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json().then(data => {
+                            data.forEach(item => {
+                                const newOutput = createMessageElement(item.content, item.role);
+                                output.appendChild(newOutput);
+                            });
+                            output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                        });
+                    } else {
+                        const newOutput = createMessageElement('Error loading chat history', 'error');
+                        output.appendChild(newOutput);
+                        output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                    }
+                }).catch(error => {
+                    const newOutput = createMessageElement('Network error', 'error');
+                    output.appendChild(newOutput);
+                    output.scrollTop = output.scrollHeight; // Scroll to the bottom
+                });
+        });
     </script>
 </body>
 </html>
