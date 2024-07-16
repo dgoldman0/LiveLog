@@ -225,7 +225,7 @@ def execute_command(conn, user_id, conversation_history, input_text, response):
     response = client.chat.completions.create(
             model=model, 
             messages=messages,
-            max_tokens=1500
+            max_tokens=3000
         ).choices[0].message.content.strip()
     conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "assistant", "content": response})))
     return response
@@ -240,6 +240,7 @@ def process_input(user_id, input_text):
     
     There is no need to find the user id, as the system already has it stored.
 
+    article(id) - Get title, subtitle, and full content of an article with the provided id. If the article is not published, the draft content will be retrieved.
     articles(author_id) - List articles published from a given user. Leave author_id blank to list articles by the user.
     drafts() - Get a list of drafts from the user.
     create() - Create a new livelog entry.
@@ -292,7 +293,7 @@ def process_input(user_id, input_text):
     response = client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=1000
+            max_tokens=2000
         ).choices[0].message.content.strip()
     
     # Get the last line of the response and execute
