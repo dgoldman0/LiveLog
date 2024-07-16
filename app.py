@@ -203,6 +203,21 @@ def view_article(article_id):
         article['evaluation'] = None
     return render_template('article.html', article=article, blog_id=blog_id, author=author, user_id = session.get('user_id'))
 
+# Similar to above, but it's pulling the draft info, i.e. saved_title, saved_subtitle, saved_content
+@app.route('/article/<int:article_id>/preview', methods=('GET',))
+def preview_article(article_id):
+    conn = get_db_connection()
+    article_info = conn.execute('SELECT saved_title, saved_subtitle, saved_content, author_id FROM articles WHERE id = ?', (article_id,)).fetchone()
+    article = {'title': article_info['saved_title'], 'subtitle': article_info['saved_subtitle'], 'content': article_info['saved_content'], 'DRAFT': True, 'id': article_id}
+    conn.close()
+    if article is None:
+        return 'Article not found!', 404
+    if article['DRAFT']:
+        if article_info['author_id'] != session.get('user_id'):
+            return 'You are not authorized to view this draft!', 403
+        return render_template('preview_article.html', article=article)
+    return render_template('article.html', article=article)
+
 @app.route('/user/<int:user_id>/articles', methods=('GET',))
 def articles(user_id):
     conn = get_db_connection()
