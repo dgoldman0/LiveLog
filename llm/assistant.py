@@ -31,6 +31,13 @@ def list_drafts(conn, user_id):
             draft_list += f"Draft ID: {draft['id']}\nTitle: {draft['saved_title']}\nSubtitle: {draft['saved_subtitle']}\nContent:\n{draft['saved_content']}"
         return f"Retrieved drafts...\n\n{draft_list}"
 
+# Get full details of an article, if it is published and exists of course.
+def get_article(conn, article_id):
+    article = conn.execute('SELECT * FROM articles WHERE id = ? and DRAFT = 0', (article_id,)).fetchone()
+    if article:
+        return f"Retrieved article with id: {article_id}.\n\nTitle: {article['title']}\nSubtitle: {article['subtitle']}\nContent:\n{article['content']}"
+    return f"Article with id: {article_id} not found."
+
 # Create a new article and return the article id.
 def create(conn, user_id):
     conn.execute('INSERT INTO articles (author_id) VALUES (?)', (user_id,))
@@ -97,7 +104,7 @@ def evaluation(conn, user_id, article_id):
 
 def parse_command(response):
     # Define a regular expression pattern to capture the command
-    pattern = re.compile(r'^(drafts\(\)|articles\(\d*\)|create\(\)|title\(\d+, ".*?"\)|title\(\d+\)|subtitle\(\d+, ".*?"\)|subtitle\(\d+\)|content\(\d+, ".*?"\)|content\(\d+\)|tags\(\d*\)|evaluation\(\d+\)|subtitle\(".*?"\)|respond\(".*?"\)|now\(\))$', re.MULTILINE)
+    pattern = re.compile(r'^(drafts\(\)|articles\(\d*\)|create\(\)|article\(\d+\)|title\(\d+, ".*?"\)|title\(\d+\)|subtitle\(\d+, ".*?"\)|subtitle\(\d+\)|content\(\d+, ".*?"\)|content\(\d+\)|tags\(\d*\)|evaluation\(\d+\)|subtitle\(".*?"\)|respond\(".*?"\)|now\(\))$', re.MULTILINE)
     # Search for the command in the response
     match = pattern.search(response.strip())
     
@@ -125,6 +132,12 @@ def execute_command(conn, user_id, conversation_history, input_text, response):
     elif command.startswith("create()"):
         # Call the create function
         context = create(conn, user_id)
+    elif command.startswith("article("):
+        # Extract id and title from the command
+        match = re.match(r'article\((\d+)"\)', command)
+        if match:
+            article_id = int(match.group(1))
+            context = get_article(conn, id, article_id)
     elif command.startswith("title("):
         # Extract id and title from the command
         match = re.match(r'title\((\d+), "(.*?)"\)', command)
