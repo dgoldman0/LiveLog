@@ -79,3 +79,39 @@ CREATE TABLE article_tags (
     FOREIGN KEY (tag) REFERENCES tags (tag),
     FOREIGN KEY (article_id) REFERENCES articles (id)
 );
+
+CREATE VIRTUAL TABLE articles_fts USING fts5(
+    title,
+    subtitle,
+    content,
+    tldr,
+    content='articles',
+    content_rowid='id'
+);
+
+-- Trigger to update the FTS table on insert
+CREATE TRIGGER articles_ai AFTER INSERT ON articles BEGIN
+  INSERT INTO articles_fts(rowid, title, subtitle, content, tldr)
+  VALUES (new.id, new.title, new.subtitle, new.content, new.tldr);
+END;
+
+-- Trigger to update the FTS table on update
+CREATE TRIGGER articles_au AFTER UPDATE ON articles BEGIN
+  UPDATE articles_fts SET
+    title = new.title,
+    subtitle = new.subtitle,
+    content = new.content,
+    tldr = new.tldr
+  WHERE rowid = new.id;
+END;
+
+-- Trigger to update the FTS table on delete
+CREATE TRIGGER articles_ad AFTER DELETE ON articles BEGIN
+  DELETE FROM articles_fts WHERE rowid = old.id;
+END;
+
+CREATE INDEX idx_articles_title ON articles(title);
+CREATE INDEX idx_articles_subtitle ON articles(subtitle);
+CREATE INDEX idx_articles_content ON articles(content);
+CREATE INDEX idx_article_tags_tag ON article_tags(tag);
+CREATE INDEX idx_article_tags_article_id ON article_tags(article_id);

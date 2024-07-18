@@ -6,6 +6,7 @@ import hashlib
 import binascii
 import llm.articles
 import llm.assistant
+import llm.fake
 
 app = Flask(__name__)
 app.secret_key = 'super secret key 12294ffee'
@@ -22,6 +23,18 @@ def init_db():
         # Perform a single SHA-256 hash
         hashed_password = hashlib.sha256(data.encode()).hexdigest()
         db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', hashed_password, salt))
+        # Create 10 fake articles
+        print("Generating fake articles...")
+        for i in range(10):
+            print(f"Generating article {i+1}")
+            title, subtitle, content = llm.fake.generate_fake_article()
+            tldr = llm.articles.generate_tldr(content)
+            evaluation, score = llm.articles.evaluate_article(content)
+            db.execute('INSERT INTO articles (title, subtitle, content, tldr, evaluation, score, DRAFT) VALUES (?, ?, ?, ?, ?, ?, FALSE)', (title, subtitle, content, tldr, evaluation, score))
+            # Add tags
+            tags = llm.articles.generate_tags(content)
+            for tag in tags:
+                db.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (i+1, tag))
         db.commit()
         db.close()
 

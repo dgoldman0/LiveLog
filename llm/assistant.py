@@ -7,7 +7,7 @@ import json
 import re
 
 client = openai.Client()
-model = "gpt-4o"
+model = "gpt-4o-mini"
 
 # The following are functions that will give access to automate various tasks in the LiveLog system giving abilities to the assistant. Maybe should replace getter and setter with unified like I accidentally did with context?
 # List articles from a given user.
