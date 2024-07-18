@@ -13,6 +13,7 @@ app.secret_key = 'super secret key 12294ffee'
 
 def init_db():
     with app.app_context():
+        print("Initializing database...")
         db = get_db_connection()
         with app.open_resource('schema.sql') as f:
             db.executescript(f.read().decode('utf8'))
@@ -30,7 +31,7 @@ def init_db():
             title, subtitle, content = llm.fake.generate_fake_article()
             tldr = llm.articles.generate_tldr(content)
             evaluation, score = llm.articles.evaluate_article(content)
-            db.execute('INSERT INTO articles (title, subtitle, content, tldr, evaluation, score, DRAFT) VALUES (?, ?, ?, ?, ?, ?, FALSE)', (title, subtitle, content, tldr, evaluation, score))
+            db.execute('INSERT INTO articles (title, subtitle, content, tldr, evaluation, score, DRAFT, author_id) VALUES (?, ?, ?, ?, ?, ?, FALSE, 1)', (title, subtitle, content, tldr, evaluation, score))
             # Add tags
             tags = llm.articles.generate_tags(content)
             for tag in tags:

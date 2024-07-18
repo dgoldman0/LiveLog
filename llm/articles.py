@@ -2,7 +2,7 @@ import openai
 
 client = openai.Client()
 
-model = "gpt-4o"
+model = "gpt-4o-mini"
 
 tag_prompt = """You are an article tag generator.
 Tags can be one to three words and can be informative, genre-related, topic-related, or style-related.
@@ -187,17 +187,14 @@ Each criterion is assessed without numerical values during the evaluation proces
 - Provide comments to justify scores and offer constructive feedback.
 - Use the total score to determine overall content quality based on the final rating.
 
-Evaluate the following content based on the comprehensive content quality rubric. Provide detailed feedback on each criterion to assess the quality of the content. Again, do not use numeric scoring. Give a final determination of the overall quality rating based on the evaluation with the options of 'exceptional, very Good, good, satisfactory, or needs improvement. This final score should be on a new line, by itself, nothing else, no formatting.'"""
-
-    messages = [{"role": "system", "content": rubric}, {"role": "user", "content": content}]
-    response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=1000
-        ).choices[0].message.content.strip()
-
-   
+Evaluate the following content based on the comprehensive content quality rubric. Provide detailed feedback on each criterion to assess the quality of the content. Again, do not use numeric scoring.'"""
+    messages = [{"role": "system", "content": rubric}, {"role": "user", "content": content}, {"role": "system", "content": "Evaluate the content based on the comprehensive content quality rubric. The final line must be unfomatted and exactly either 'Exceptional', 'Very Good', 'Good', 'Satisfactory', or 'Needs Improvement' ONLY."}]
     while True:
+      response = client.chat.completions.create(
+               model=model,
+               messages=messages,
+               max_tokens=1000
+         ).choices[0].message.content.strip()
       # Get the final score
       result = response.split('\n')[-1].lower()
       # Double check that the format is correct as a valid score.

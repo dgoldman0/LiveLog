@@ -4,7 +4,7 @@ import openai
 
 client = openai.Client()    
 
-model = "gpt-4o"
+model = "gpt-4o-mini"
 
 qa_prompt = """You are a synthetic data generator. Synthetic data should be in the form of prompt | completion, and so the '|' character should not appear in either the prompt or completion unless it is escaped first. For example, 'Somethihng something\| something | completion'. Prompts should be questions about the article, and completions should be the answers to those questions.
 
