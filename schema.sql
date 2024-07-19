@@ -46,6 +46,14 @@ CREATE TABLE articles (
     FOREIGN KEY (author_id) REFERENCES users (id)
 );
 
+-- Keeps a list of synthetic data training pairs created based on each article. The pair_type field is used to distinguish between different types of training pairs, such as knowledge and style.
+CREATE TABLE training_pairs (
+    article_id INTEGER NOT NULL,
+    prompt TEXT NOT NULL,
+    completion TEXT NOT NULL,
+    pair_type TEXT NOT NULL,
+    FOREIGN KEY (article_id) REFERENCES articles (id)
+);
 -- Keeps an ongoing list of article revisions and their date. PRIMARY KEY is a composite of article_id and revision_date
 CREATE TABLE article_revisions (
     article_id INTEGER NOT NULL,

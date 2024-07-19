@@ -7,6 +7,7 @@ import binascii
 import llm.articles
 import llm.assistant
 import llm.fake
+import llm.synthetic
 
 app = Flask(__name__)
 app.secret_key = 'super secret key 12294ffee'
@@ -285,6 +286,9 @@ def post_article(article_id):
     subtitle = article['saved_subtitle']
     content = article['saved_content']
 
+    if score == 0:
+        return 'Article quality is too low to post!', 400
+
     tldr = llm.articles.generate_tldr(content)
  
    # Build a dictionary of tags and how many articles they are associated with. We can do that by looking at article_tags.
@@ -294,23 +298,30 @@ def post_article(article_id):
         GROUP BY tag"""    
     results = conn.execute(query).fetchall()
     all_tags = {row[0]: row[1] for row in results}
-
-    tags = llm.articles.generate_tags(content, all_tags)
  
     evaluation, score = llm.articles.evaluate_article(content)
-    if score == 0:
-        return 'Article quality is too low to post!', 400
+
     conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, evaluation = ?, score = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, evaluation, score,  article_id))
-    
-    conn.execute('UPDATE articles SET title = ?, subtitle = ?, content = ?, tldr = ?, DRAFT = FALSE WHERE id = ?', (title, subtitle, content, tldr, article_id))
+
     # Remove old article tags and add generate new ones.
-    conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,))
- 
+    tags = llm.articles.generate_tags(content, all_tags)
+    conn.execute('DELETE FROM article_tags WHERE article_id = ?', (article_id,)) 
     for tag in tags:
         # Set article's tags
         conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag.strip()))
         # Add tag to main tag list if none.
         conn.execute('INSERT OR IGNORE INTO tags (tag) VALUES (?)', (tag.strip(),))
+
+    # Generate synthetic training data
+    k_pairs = llm.synthetic.generate_knowledge_pairs(content)   
+    conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+    for pair in k_pairs:
+        conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "KNOWLEDGE", pair[0], pair[1]))
+    s_pairs = llm.synthetic.generate_story_pairs(content)
+    conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+    for pair in s_pairs:
+        conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "STYLE", pair[0], pair[1]))
+
     # Add to revision history
     conn.execute('INSERT INTO article_revisions (article_id, title, subtitle, content, tldr) VALUES (?, ?, ?, ?, ?)', (article_id, title, subtitle, content, tldr))
     conn.commit()
