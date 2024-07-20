@@ -283,22 +283,42 @@ def process_input(user_id, input_text):
     This system is a backend toolkit system, not a system to reply to a end user directly. The only valid output is one of the commands listed.
     """
 
-    messages = [{"role": "system", "content": system_message}]
-    for row in conversation_history:
-        messages.append(json.loads(row['centry']))
-    messages.append({"role": "user", "content": input_text})
+    cont = True
+    command = ""
+    while cont:
+        messages = [{"role": "system", "content": system_message}]
+        for row in conversation_history:
+            messages.append(json.loads(row['centry']))
+        messages.append({"role": "user", "content": input_text})
 
-    conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "user", "content": input_text})))
+        conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "user", "content": input_text})))
+            
+        response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=2000
+            ).choices[0].message.content.strip()
         
-    response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=2000
-        ).choices[0].message.content.strip()
-    
-    # Get the last line of the response and execute
-    command = response.split('\n')[-1]
-
+        # Get the last line of the response and execute
+        command = response.split('\n')[-1]
+        # Run a sanity check.
+        messages = [{"role": "system", "content": "You are a sanitory check system. Your task is to determine if the command selected is reasonable, based on the conversation history and most recent message."}]
+        # Convert whole conversation history to string for now.
+        history = '\n'.join([f"{row['role']}: {row['content']}" for row in conversation_history])
+        history += f"\nuser: {input_text}"
+        messages.append({"role": "user", "content": history})
+        messages.append({"role": "assistant", "content": f"Selected command: {command}"})
+        messages.append({"role": "system", "content": "Determine if the command is reasonable based on the conversation history and most recent message in the conversation history provided. Respond only with 'yes' or 'no' and nothing else."})
+        check = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=2000
+            ).choices[0].message.content.strip()
+        if check == "yes":
+            cont = False
+        else:
+            print(check)
+            print(conversation_history)
     result = execute_command(conn, user_id, conversation_history, input_text, command)
     conn.commit() # Maybe should share conn throughout and commit at the end?
     conn.close()

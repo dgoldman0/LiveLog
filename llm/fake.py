@@ -5,30 +5,71 @@ model = "gpt-4o-mini"
 client = openai.Client()
 
 def generate_fake_article():
+    requirements = """
+    Echoes of the Past
+    Uncovering Ancient Civilizations
 
-    """You are a content generator. Write a short essay, fiction or non-fiction, any style. The first line should be the title of the essay, the second line should be the subtitle, and the third line should be blank. The rest of the content should be the body of the essay. Neither the title nor subtitle should have any formatting. For example:
+    Quantum Realities
+    Exploring the Mysteries of the Universe
 
-    Title
-    Subtitle
+    Culinary Journeys
+    A Tour of Global Flavors
 
-    [Content]
+    The Art of Mindfulness
+    Finding Peace in a Hectic World
 
-    Example.
+    Digital Nomads
+    The New Age of Remote Work
 
-    Title: The History of the Internet
-    Subtitle: A Brief Overview
+    Beyond the Horizon
+    Adventures in Space Exploration
 
-    The internet has a long and storied history. It began as a research project in the 1960s and has since grown into a global network that connects billions of people around the world. The internet has revolutionized the way we communicate, work, and play. It has changed the way we access information, conduct business, and interact with one another. The internet has brought the world closer together and made it easier than ever to connect with people from all walks of life. In this essay, we will explore the history of the internet and its impact on society."""
+    Whispers of the Wild
+    Conservation Stories from the Animal Kingdom
 
-    messages = [{"role": "system", "content": "You are a content generator. Write a short essay, fiction or non-fiction, any style. The first line should be the title of the essay, the second line should be the subtitle, and the third line should be blank. The rest of the content should be the body of the essay."}]
+    The Human Genome
+    Unlocking the Secrets of Our DNA
+    
+    Absolutely no formatting is allowed. Plain text only."""
+
+    messages = [
+        {"role": "system", "content": "You are a content generator. Generate a title and subtitle pair for an essay."},
+        {"role": "user", "content": requirements}
+    ]
+
     response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=2000
-        ).choices[0].message.content.strip()
+        model=model,
+        messages=messages,
+        max_tokens=50
+    ).choices[0].message.content.strip()
 
-    # Split the response into title, subtitle, and content
-    title, subtitle, content = response.split("\n", 2)
+    # Split the response into title and subtitle
+    title, subtitle = response.split("\n")
+
+    content_requirements = f"""
+    Write a short piece, fiction or non-fiction, any style, using the given title and subtitle. The first line should be the title of the essay, the second line should be the subtitle, and the third line should be blank. The rest of the content should be the body of the essay. Neither the title nor subtitle should have any formatting. The content itself can have markdown. Here is the title and subtitle to use:
+
+    {title}
+    {subtitle}
+
+    For example:
+
+    The History of the Internet
+    A Brief Overview
+
+    The internet has a long and storied history. It began as a research project in the 1960s and has since grown into a global network that connects billions of people around the world. The internet has revolutionized the way we communicate, work, and play. It has changed the way we access information, conduct business, and interact with one another. The internet has brought the world closer together and made it easier than ever to connect with people from all walks of life. In this essay, we will explore the history of the internet and its impact on society.
+    """
+
+    messages = [
+        {"role": "system", "content": "You are a content generator. Generate a short piece using the given title and subtitle."},
+        {"role": "user", "content": content_requirements}
+    ]
+
+    content = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        max_tokens=2000
+    ).choices[0].message.content.strip()
 
     return title, subtitle, content
 
