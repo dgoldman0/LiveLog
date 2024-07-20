@@ -2,7 +2,13 @@
 
 LiveLog is among the first voxsite platforms dedicated to authorship. LiveLog has a shared data model. Users agree to share their content to improve the voxsite, and LiveLog creates a tailored voxsite for the author, based on their own content. While there will be a web interface for now, the goal is to have the voxsite [GopherAI](https://github.com/dgoldman0/gopherAI) ready from early on.
 
+# Capabilities
+
+- Virtual Librarian: LiveLog provides a virtual librarian service which helps search for and understand content on the platform, and also helps with publishing. 
+- Immediate Automated Review: When a new article is posted, a review is automatically generated, giving immediate feedback on their content.
+
 # Technological Overview
+
 
 ## Enriched Synthetic Data
 
