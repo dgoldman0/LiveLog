@@ -6,6 +6,10 @@ client = openai.Client()
 
 def generate_fake_article():
     requirements = """
+    You are a title and subtitle pair generator. The following are examples. The title and subtitle can be any topic at all, fiction, non-fiction, fantasy, it does not matter.
+
+    Examples:
+
     Echoes of the Past
     Uncovering Ancient Civilizations
 
@@ -30,11 +34,11 @@ def generate_fake_article():
     The Human Genome
     Unlocking the Secrets of Our DNA
     
-    Absolutely no formatting is allowed. Plain text only."""
+    The title and subtitle should be in plain text."""
 
     messages = [
-        {"role": "system", "content": "You are a content generator. Generate a title and subtitle pair for an essay."},
-        {"role": "user", "content": requirements}
+        {"role": "system", "content": requirements},
+        {"role": "user", "content": "Generate one title and subtitle pair."}
     ]
 
     response = client.chat.completions.create(

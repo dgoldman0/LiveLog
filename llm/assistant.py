@@ -214,22 +214,35 @@ def execute_command(conn, user_id, conversation_history, input_text, response):
     If linking to articles, etc., use relative links. For instance,
     /article/3/draft for linking to draft editor with id 3.
     /article/1 to view article with id 1.
-    /blog/5 for linking to the blog with id 5."""
-
-    messages = [{"role": "system", "content": system_message}]
-    for row in conversation_history:
-        messages.append(json.loads(row['centry']))
-    messages.append({"role": "user", "content": input_text})
-    messages.append({"role": "assistant", "content": context})
-    messages.append({"role": "system", "content": "Use the information provided to write a response to the user."})
-    response = client.chat.completions.create(
-            model=model, 
-            messages=messages,
-            max_tokens=3000
-        ).choices[0].message.content.strip()
-    conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "assistant", "content": response})))
-    return response
-
+    /blog/5 for linking to the blog with id 5.
+    
+    You can and should use full markdown where appropriate to create clean and easily readable results. Ensure that links are proper relative links if linking to internal content."""
+    while True:
+        messages = [{"role": "system", "content": system_message}]
+        for row in conversation_history:
+            messages.append(json.loads(row['centry']))
+        messages.append({"role": "user", "content": input_text})
+        messages.append({"role": "assistant", "content": context})
+        messages.append({"role": "system", "content": "Use the information provided to write a response to the user."})
+        response = client.chat.completions.create(
+                model=model, 
+                messages=messages,
+                max_tokens=3000
+            ).choices[0].message.content.strip()
+        
+        messages[0] = {"role": "system", "content": "You are a response checker. Evaluate the response to determine if it is appropriate based on the conversation history and most recent message. Ensure that markdown formatting is sufficiently clear and neat."}
+        messages.append({"role": "assistant", "content": response})
+        messages.append({"role": "system", "content": "Determine if the response is appropriate based on the conversation history and most recent message in the conversation history provided. Respond only with 'yes' or 'no' and nothing else."})
+        check = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=10
+            ).choices[0].message.content.strip()
+        if check == "yes":
+            conn.execute('INSERT INTO conversation_history (user_id, centry) VALUES (?, ?)', (user_id, json.dumps({"role": "assistant", "content": response})))
+            return response
+        else:
+            print(check)
 # Include later:    drafts() - List drafts from the user.
 def process_input(user_id, input_text):
     # Get convesation history from the database.
@@ -302,7 +315,7 @@ def process_input(user_id, input_text):
         # Get the last line of the response and execute
         command = response.split('\n')[-1]
         # Run a sanity check.
-        messages = [{"role": "system", "content": "You are a sanitory check system. Your task is to determine if the command selected is reasonable, based on the conversation history and most recent message."}]
+        messages = [{"role": "system", "content": "You are a sanity check system. Your task is to determine if the command selected is reasonable, based on the conversation history and most recent message."}]
         # Convert whole conversation history to string for now.
         history = '\n'.join([f"{row['role']}: {row['content']}" for row in conversation_history])
         history += f"\nuser: {input_text}"
