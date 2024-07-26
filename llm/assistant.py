@@ -310,9 +310,9 @@ def process_input(user_id, input_text):
         messages.append({"role": "assistant", "content": f"Selected command: {command}"})
         messages.append({"role": "system", "content": "Determine if the command is reasonable based on the conversation history and most recent message in the conversation history provided. Respond only with 'yes' or 'no' and nothing else."})
         check = client.chat.completions.create(
-                model=model,
+                model=model,    
                 messages=messages,
-                max_tokens=2000
+                max_tokens=10
             ).choices[0].message.content.strip()
         if check == "yes":
             cont = False
