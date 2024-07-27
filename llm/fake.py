@@ -56,17 +56,12 @@ def generate_fake_article(current_list = None):
     title, subtitle = response.split("\n")
 
     content_requirements = f"""
-    Write a short piece, fiction or non-fiction, any style, using the given title and subtitle. The first line should be the title of the essay, the second line should be the subtitle, and the third line should be blank. The rest of the content should be the body of the essay. Neither the title nor subtitle should have any formatting. The content itself can have markdown. Here is the title and subtitle to use:
+    Write a short piece, fiction or non-fiction, any style, using the given title and subtitle. Here is the title and subtitle to use:
 
     {title}
     {subtitle}
 
-    For example:
-
-    The History of the Internet
-    A Brief Overview
-
-    The internet has a long and storied history. It began as a research project in the 1960s and has since grown into a global network that connects billions of people around the world. The internet has revolutionized the way we communicate, work, and play. It has changed the way we access information, conduct business, and interact with one another. The internet has brought the world closer together and made it easier than ever to connect with people from all walks of life. In this essay, we will explore the history of the internet and its impact on society.
+    Write just the content based on the title and subtitle. You may use markdown.
     """
 
     messages = [

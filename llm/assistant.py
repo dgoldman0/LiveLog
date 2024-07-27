@@ -317,8 +317,10 @@ def process_input(user_id, input_text):
         # Run a sanity check.
         messages = [{"role": "system", "content": "You are a sanity check system. Your task is to determine if the command selected is reasonable, based on the conversation history and most recent message."}]
         # Convert whole conversation history to string for now: breaks
-        history = '\n'.join([f"{row['role']}: {row['content']}" for row in conversation_history])
-        history += f"\nuser: {input_text}"
+        history = ""
+        for row in conversation_history:
+            history += json.loads(row['centry'])['content'] + "\n"
+        history += f"user: {input_text}"
         messages.append({"role": "user", "content": history})
         messages.append({"role": "assistant", "content": f"Selected command: {command}"})
         messages.append({"role": "system", "content": "Determine if the command is reasonable based on the conversation history and most recent message in the conversation history provided. Respond only with 'yes' or 'no' and nothing else."})

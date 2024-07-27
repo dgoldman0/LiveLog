@@ -62,7 +62,9 @@ def generate_knowledge_pairs(author_info, article_info, article):
     - Prompt: What ingredients are needed for Spaghetti Carbonara? | Completion: The ingredients needed are spaghetti, eggs, Parmesan cheese, pancetta, black pepper, and salt."""
 
     qa_prompt = f"""You are a synthetic data generator. Synthetic data should be in the form of prompt | completion, and so the '|' character should not appear in either the prompt or completion unless it is escaped first. For example, 'Somethihng something\| something | completion'. Prompts should be questions about the article, and completions should be the answers to those questions.
+    Requirements:
     {requirements}
+
     The user will enter the article information, the author infomation, and then the article content. The article content will be in markdown, but the prompt-completion pairs must be in plain text.
     """
     messages = [{"role": "system", "content": qa_prompt}, {"role": "user", "content": article_info}, {"role": "user", "content": author_info}, {"role": "user", "content": article}, {"role": "system", "content": "Generate synthetic data based on the article information.\nFollow the format of prompt|completion\nprompt|completion"}]

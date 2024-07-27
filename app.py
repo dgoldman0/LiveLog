@@ -44,12 +44,11 @@ def init_db(fake = False):
                 for tag in tags:
                     conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag))
                 print("Generating synthetic training data...")
-                k_pairs = llm.synthetic.generate_knowledge_pairs("Ploni Almoni", f"{title}\n{subtitle}", content)   
                 conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+                k_pairs = llm.synthetic.generate_knowledge_pairs("Ploni Almoni", f"{title}\n{subtitle}", content)   
                 for pair in k_pairs:
                     conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "KNOWLEDGE", pair[0], pair[1]))
                 s_pairs = llm.synthetic.generate_style_pairs(content)
-                conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
                 for pair in s_pairs:
                     conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "STYLE", pair[0], pair[1]))
         conn.commit()
@@ -328,12 +327,11 @@ def post_article(article_id):
         conn.execute('INSERT OR IGNORE INTO tags (tag) VALUES (?)', (tag.strip(),))
 
     # Generate synthetic training data
-    k_pairs = llm.synthetic.generate_knowledge_pairs(content)   
     conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+    k_pairs = llm.synthetic.generate_knowledge_pairs(content)   
     for pair in k_pairs:
         conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "KNOWLEDGE", pair[0], pair[1]))
     s_pairs = llm.synthetic.generate_style_pairs(content)
-    conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
     for pair in s_pairs:
         conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "STYLE", pair[0], pair[1]))
 
