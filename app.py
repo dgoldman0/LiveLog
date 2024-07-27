@@ -15,31 +15,45 @@ app.secret_key = 'super secret key 12294ffee'
 def init_db(fake = False):
     with app.app_context():
         print("Initializing database...")
-        db = get_db_connection()
+        conn = get_db_connection()
         with app.open_resource('schema.sql') as f:
-            db.executescript(f.read().decode('utf8'))
+            conn.executescript(f.read().decode('utf8'))
         # Create a default user. Requires generating a salt and hashing the password.
         salt = binascii.hexlify(os.urandom(16)).decode()
         data = "password" + salt
 
         # Perform a single SHA-256 hash
         hashed_password = hashlib.sha256(data.encode()).hexdigest()
-        db.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', hashed_password, salt))
+        conn.execute('INSERT INTO users (username, access_key, salt) VALUES (?, ?, ?)', ('admin', hashed_password, salt))
+        articles = []
         if fake:
             # Create 10 fake articles
             print("Generating fake articles...")
             for i in range(10):
-                print(f"Generating article {i+1}")
+                article_id = i+1
+                print(f"Generating article {article_id}")
                 title, subtitle, content = llm.fake.generate_fake_article()
+                articles.append((title, subtitle)) 
+                print("Generating tldr...")
                 tldr = llm.articles.generate_tldr(content)
+                print("Evaluating article...")
                 evaluation, score = llm.articles.evaluate_article(content)
-                db.execute('INSERT INTO articles (title, subtitle, content, tldr, evaluation, score, DRAFT, author_id) VALUES (?, ?, ?, ?, ?, ?, FALSE, 1)', (title, subtitle, content, tldr, evaluation, score))
-                # Add tags
+                conn.execute('INSERT INTO articles (title, subtitle, content, tldr, evaluation, score, DRAFT, author_id) VALUES (?, ?, ?, ?, ?, ?, FALSE, 1)', (title, subtitle, content, tldr, evaluation, score))
+                print("Generating tags...")
                 tags = llm.articles.generate_tags(content)
                 for tag in tags:
-                    db.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (i+1, tag))
-        db.commit()
-        db.close()
+                    conn.execute('INSERT INTO article_tags (article_id, tag) VALUES (?, ?)', (article_id, tag))
+                print("Generating synthetic training data...")
+                k_pairs = llm.synthetic.generate_knowledge_pairs("Ploni Almoni", f"{title}\n{subtitle}", content)   
+                conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+                for pair in k_pairs:
+                    conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "KNOWLEDGE", pair[0], pair[1]))
+                s_pairs = llm.synthetic.generate_style_pairs(content)
+                conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
+                for pair in s_pairs:
+                    conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "STYLE", pair[0], pair[1]))
+        conn.commit()
+        conn.close()
 
 @app.route('/')
 def index():
@@ -318,7 +332,7 @@ def post_article(article_id):
     conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
     for pair in k_pairs:
         conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "KNOWLEDGE", pair[0], pair[1]))
-    s_pairs = llm.synthetic.generate_story_pairs(content)
+    s_pairs = llm.synthetic.generate_style_pairs(content)
     conn.execute('DELETE FROM training_pairs WHERE article_id = ?', (article_id,))
     for pair in s_pairs:
         conn.execute('INSERT INTO training_pairs (article_id, pair_type, prompt, completion) VALUES (?, ?, ?, ?)', (article_id, "STYLE", pair[0], pair[1]))

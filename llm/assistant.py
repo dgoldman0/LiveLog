@@ -316,7 +316,7 @@ def process_input(user_id, input_text):
         command = response.split('\n')[-1]
         # Run a sanity check.
         messages = [{"role": "system", "content": "You are a sanity check system. Your task is to determine if the command selected is reasonable, based on the conversation history and most recent message."}]
-        # Convert whole conversation history to string for now.
+        # Convert whole conversation history to string for now: breaks
         history = '\n'.join([f"{row['role']}: {row['content']}" for row in conversation_history])
         history += f"\nuser: {input_text}"
         messages.append({"role": "user", "content": history})

@@ -4,7 +4,7 @@ model = "gpt-4o-mini"
 
 client = openai.Client()
 
-def generate_fake_article():
+def generate_fake_article(current_list = None):
     requirements = """
     You are a title and subtitle pair generator. The following are examples. The title and subtitle can be any topic at all, fiction, non-fiction, fantasy, it does not matter.
 
@@ -36,9 +36,14 @@ def generate_fake_article():
     
     The title and subtitle should be in plain text."""
 
+    pairs = ""
+    if current_list and len(current_list) > 0:
+        for title, subtitle in current_list:
+            pairs += f"{title}\n{subtitle}\n"
     messages = [
         {"role": "system", "content": requirements},
-        {"role": "user", "content": "Generate one title and subtitle pair."}
+        {"role": "assistant", "content": f"Current title and subtitle pairs:{pairs}\n"},
+        {"role": "user", "content": "Generate one new title and subtitle pair."}
     ]
 
     response = client.chat.completions.create(

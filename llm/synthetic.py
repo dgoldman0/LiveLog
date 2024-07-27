@@ -125,11 +125,5 @@ Examples:
     # TBD
 
     # Convert to array of pairs
-    response = [[element.strip() for element in pair.split("|")] for pair in response.split('\n') if pair.strip()]
-    return response
-
-# Generates a single training pair that creates a piece in the spirit of the original sample. TBW
-def generate_spirit_pair(sample):
-    requirements = """"""
-    spirit_prompt = f"""You are a synthetic data generator. Synthetic data should be in the form of prompt | completion, and so the '|' character should not appear in either the prompt or completion unless it is escaped first. For example, 'Somethihng something\| something | completion'. Prompts should be requests to generate content and completions should be the generated content. No multiline prompts or completions allowed.
-    """
+    result = [[element.strip() for element in pair.split("|")] for pair in response.split('\n') if pair.strip()]
+    return result
